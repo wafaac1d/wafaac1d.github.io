@@ -2,67 +2,694 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Заметка</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Калькулятор стоимости авто | Anton</title>
     <style>
+        :root {
+            --primary-color: #4361ee;
+            --primary-hover: #3a56d4;
+            --secondary-color: #3f37c9;
+            --text-dark: #2b2d42;
+            --text-medium: #4a4e69;
+            --text-light: #8e9aaf;
+            --bg-light: #f8f9fa;
+            --bg-white: #ffffff;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.1);
+            --border-radius: 8px;
+            --transition: all 0.3s ease;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--text-medium);
+            background-color: var(--bg-light);
             margin: 0;
-            padding: 0;
-            background-color: white;
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            padding: 1rem;
+            -webkit-text-size-adjust: 100%;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Типография */
+        h1, h2, h3 {
+            color: var(--text-dark);
+            margin-top: 0;
+            line-height: 1.3;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: var(--primary-color);
+            position: relative;
+            padding-bottom: 0.5rem;
+        }
+
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 3px;
+            background: var(--primary-color);
+            border-radius: 3px;
+        }
+
+        h2 {
+            font-size: 1.3rem;
+            margin-bottom: 1.2rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(0,0,0,0.1);
             display: flex;
-            justify-content: center;
             align-items: center;
-            min-height: 100vh;
-        }
-        
-        .note-container {
-            width: 90%;
-            max-width: 600px;
-            padding: 20px;
-            line-height: 1.5;
-            font-size: 17px;
-            color: #000;
-            word-wrap: break-word;
         }
 
-        a {
+        /* Блоки */
+        .block {
+            background-color: var(--bg-white);
+            padding: 1.2rem;
+            margin-bottom: 1.2rem;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow-sm);
+            transition: var(--transition);
+        }
+
+        .block:hover {
+            box-shadow: var(--shadow-md);
+        }
+
+        .total-block {
+            background-color: rgba(67, 97, 238, 0.05);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .block-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            background-color: var(--primary-color);
             color: white;
-        }
-        
-        a:hover {
-            color: #f0f0f0; /* Слегка светлее при наведении */
-        }
-        
-        a:visited {
-            color: #e0e0e0; /* Посещённые ссылки */
-        }
-        
-        a:active {
-            color: #ffffff; /* При нажатии */
-        }
-        
-        .underline {
-            text-decoration: underline;
+            border-radius: 50%;
+            margin-right: 0.8rem;
+            font-size: 0.9rem;
+            font-weight: bold;
         }
 
-        @media (prefers-color-scheme: dark) {
+        /* Поля ввода */
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        .input-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.4rem;
+            font-size: 0.95rem;
+        }
+
+        .input-wrapper {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .input-wrapper input {
+            flex: 1;
+            padding: 0.8rem;
+            border: 1px solid #dfe7ef;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            transition: var(--transition);
+            -webkit-appearance: none;
+            appearance: none;
+        }
+
+        .input-wrapper input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+
+        .currency {
+            position: absolute;
+            right: 0.8rem;
+            color: var(--text-light);
+            font-size: 0.9em;
+            pointer-events: none;
+        }
+
+        .loading {
+            position: absolute;
+            right: 0.8rem;
+            color: var(--text-light);
+            font-style: italic;
+            font-size: 0.8em;
+            pointer-events: none;
+        }
+
+        /* Группа комиссии */
+        .commission-group {
+            margin-bottom: 1rem;
+        }
+
+        .commission-group label {
+            display: block;
+            font-weight: 600;
+            color: var(--text-dark);
+            margin-bottom: 0.4rem;
+            font-size: 0.95rem;
+        }
+
+        .commission-inputs {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .commission-inputs .input-wrapper {
+            flex: 1;
+        }
+
+        /* Итоговые группы */
+        .total-group, .final-result {
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+
+        .total-group label, .final-result label {
+            font-weight: 700;
+            font-size: 1.1rem;
+            margin-bottom: 0.8rem;
+            display: block;
+        }
+
+        .result-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .result {
+            font-weight: 700;
+            padding: 0.8rem 1rem;
+            background-color: rgba(67, 97, 238, 0.1);
+            border-radius: var(--border-radius);
+            color: var(--primary-color);
+            font-size: 1.1rem;
+        }
+
+        /* Кнопки */
+        .actions {
+            margin-top: 1.5rem;
+        }
+
+        button {
+            padding: 1rem;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: var(--transition);
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            -webkit-tap-highlight-color: rgba(0,0,0,0.1);
+        }
+
+        button:hover, button:active {
+            background-color: var(--primary-hover);
+        }
+
+        /* Выпадающий список */
+        select {
+            width: 100%;
+            padding: 0.8rem;
+            border: 1px solid #dfe7ef;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            background-color: white;
+            -webkit-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+            background-repeat: no-repeat;
+            background-position: right 0.7rem center;
+            background-size: 1rem;
+        }
+
+        select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.2);
+        }
+
+        /* Анимации */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .block {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+
+        .block:nth-child(2) { animation-delay: 0.1s; }
+        .block:nth-child(3) { animation-delay: 0.2s; }
+        .block:nth-child(4) { animation-delay: 0.3s; }
+
+        /* Адаптивность для очень маленьких экранов */
+        @media (max-width: 360px) {
             body {
-                background-color: #1c1c1e;
+                padding: 0.8rem;
             }
-            .note-container {
-                color: #fff;
+            
+            .block {
+                padding: 1rem;
+            }
+            
+            h1 {
+                font-size: 1.6rem;
+            }
+            
+            h2 {
+                font-size: 1.2rem;
+            }
+        }
+
+        /* Пейзальная ориентация */
+        @media (max-height: 500px) and (orientation: landscape) {
+            body {
+                padding: 0.5rem;
+            }
+            
+            .block {
+                padding: 0.8rem;
+                margin-bottom: 0.8rem;
             }
         }
     </style>
 </head>
 <body>
-    <div class="note-container">
-        ха-ха-ха! повелся(-ась)? 🤡 
-        <br><br>
-        праздновать в шашлычке мы конечно не будем... или может?... 🧐 ладно, дорогой гость, уговорил! настоящее место празднования это <a href="https://yandex.ru/maps/-/CHhW4KoR">мясной ресторан МАРМО 🥩</a> готовься вкусно кушать и много смеяться! 
-        <br><br>
-        еще раз о важном: 23 августа в 19:00 жду тебя, непосредственно, внутри заведения за шикарным столом на летней террасе! конечно же не забывай про желтый цвет, без него останешься за шлагбаумом... 🫵 форма одежды: праздничная 🥳 
-    </div>
+    <header class="header">
+        <h1>Калькулятор стоимости автомобиля</h1>
+    </header>
+
+    <main class="calculator">
+        <section class="exchange-rates block">
+            <div class="input-group">
+                <label for="kurs">Курс USD/BYN</label>
+                <div class="input-wrapper">
+                    <input type="number" id="kurs" value="3.25" step="0.01" min="0" oninput="calculate()">
+                    <span class="currency">BYN/$</span>
+                    <span id="kurs-loading" class="loading">Загрузка курса...</span>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="kurs2">Курс EUR/USD</label>
+                <div class="input-wrapper">
+                    <input type="number" id="kurs2" value="1.05" step="0.01" min="0" oninput="calculate()">
+                    <span class="currency">USD/€</span>
+                    <span id="kurs-loading2" class="loading">Загрузка курса...</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <h2><span class="block-number">1</span> Расходы по Америке</h2>
+            
+            <div class="input-group">
+                <label for="Q">Ставка на аукционе</label>
+                <div class="input-wrapper">
+                    <input type="number" id="Q" value="0" min="0" step="1" oninput="calculate()">
+                    <span class="currency">$</span>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <label for="W">Аукционный сбор</label>
+                <div class="input-wrapper">
+                    <input type="number" id="W" value="0" min="0" step="1" oninput="calculate()">
+                    <span class="currency">$</span>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <label for="E">Доставка в порт погрузки</label>
+                <div class="input-wrapper">
+                    <input type="number" id="E" value="0" min="0" step="1" oninput="calculate()">
+                    <span class="currency">$</span>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <label for="R">Доставка морем</label>
+                <div class="input-wrapper">
+                    <input type="number" id="R" value="0" min="0" step="1" oninput="calculate()">
+                    <span class="currency">$</span>
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="port-select">Порт назначения</label>
+                <div class="input-wrapper">
+                    <select id="port-select" onchange="updatePortDescription()">
+                        <option value="">Выберите порт...</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <label for="T">Доставка в Беларусь</label>
+                <div class="input-wrapper">
+                    <input type="number" id="T" value="0" min="0" step="1" oninput="calculate()">
+                    <span class="currency">$</span>
+                </div>
+            </div>
+            
+            <div class="commission-group">
+                <label>Комиссия за перевод</label>
+                <div class="commission-inputs">
+                    <div class="input-wrapper">
+                        <input type="number" id="Y" value="3.5" min="0" step="0.1" oninput="calculate()">
+                        <span class="currency">%</span>
+                    </div>
+                    <div class="input-wrapper">
+                        <input type="number" id="Y1" value="50" min="0" step="1" oninput="calculate()">
+                        <span class="currency">$</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <label for="U">Моя услуга</label>
+                <div class="input-wrapper">
+                    <input type="number" id="U" value="0" min="0" step="1" oninput="calculate()">
+                    <span class="currency">BYN</span>
+                </div>
+            </div>
+            
+            <div class="total-group">
+                <label>Итого расходы по Америке</label>
+                <div class="result-wrapper">
+                    <span class="result" id="P">0</span>
+                    <span class="currency">$</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="block">
+            <h2><span class="block-number">2</span> Таможенные расходы</h2>
+            
+            <div class="input-group">
+                <label for="A">Таможенная пошлина</label>
+                <div class="input-wrapper">
+                    <input type="number" id="A" value="0" min="0" step="1" oninput="calculate()">
+                    <span class="currency">€</span>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <label for="S">Утилизационный сбор</label>
+                <div class="input-wrapper">
+                    <input type="number" id="S" value="0" min="0" step="1" oninput="calculate()">
+                    <span class="currency">BYN</span>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <label for="D">Таможенный сбор</label>
+                <div class="input-wrapper">
+                    <input type="number" id="D" value="0" min="0" step="1" oninput="calculate()">
+                    <span class="currency">BYN</span>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <label for="F">Расходы на СВХ</label>
+                <div class="input-wrapper">
+                    <input type="number" id="F" value="0" min="0" step="1" oninput="calculate()">
+                    <span class="currency">BYN</span>
+                </div>
+            </div>
+            
+            <div class="input-group">
+                <label for="G">ЭПТС</label>
+                <div class="input-wrapper">
+                    <input type="number" id="G" value="0" min="0" step="1" oninput="calculate()">
+                    <span class="currency">BYN</span>
+                </div>
+            </div>
+            
+            <div class="total-group">
+                <label>Итого таможенные расходы</label>
+                <div class="result-wrapper">
+                    <span class="result" id="O">0</span>
+                    <span class="currency">$</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="block total-block">
+            <h2><span class="block-number">3</span> Итоговая стоимость</h2>
+            
+            <div class="final-result">
+                <label>Общая сумма</label>
+                <div class="result-wrapper">
+                    <span class="result" id="J">0</span>
+                    <span class="currency">$</span>
+                    <span class="result" id="J_byn">0</span>
+                    <span class="currency">BYN</span>
+                </div>
+            </div>
+        </section>
+
+        <div class="actions">
+            <button class="copy-btn" onclick="copyResults()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <path d="M8 17.929H6c-1.105 0-2-.912-2-2.036V5.036C4 3.91 4.895 3 6 3h8c1.105 0 2 .911 2 2.036v1.866m-6 .17h8c1.105 0 2 .91 2 2.035v10.857C20 21.09 19.105 22 18 22h-8c-1.105 0-2-.911-2-2.036V9.107c0-1.124.895-2.036 2-2.036z"></path>
+                </svg>
+                Копировать результаты
+            </button>
+        </div>
+    </main>
+
+    <script>
+        let ports = [
+            { title: 'Поти, Грузия', description: 'доставка в порт Поти, Грузия' },
+            { title: 'Клайпеда, Литва', description: 'доставка в порт Клайпеда, Литва' }
+        ];
+
+        let bynRate = 3;
+        let euroRate = 1;
+
+        let currentDate = new Date();
+        let formattedDate = currentDate.toLocaleDateString('ru-RU', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric'
+        });
+
+        let selectedPortDescription = 'доставка в порт Поти, Грузия';
+
+        // Заполнение выпадающего списка
+        function populatePortSelect() {
+            const select = document.getElementById('port-select');
+            select.innerHTML = '<option value="">Выберите порт...</option>';
+            
+            ports.forEach(port => {
+                const option = document.createElement('option');
+                option.value = port.description;
+                option.textContent = port.title;
+                select.appendChild(option);
+            });
+        }
+
+        // Обновление описания порта
+        function updatePortDescription() {
+            const select = document.getElementById('port-select');
+            selectedPortDescription = select.value || 'доставка в порт Поти, Грузия';
+        }
+
+        async function fetchExchangeRate() {
+            const loadingElement = document.getElementById('kurs-loading');
+
+            try {
+                loadingElement.textContent = '(загрузка курса...)';
+                
+                const response = await fetch('https://api.nbrb.by/exrates/rates/USD?parammode=2');
+                
+                if (!response.ok) {
+                    throw new Error('Ошибка при получении курса');
+                }
+                
+                const data = await response.json();
+                bynRate = data.Cur_OfficialRate.toFixed(4);
+                
+                document.getElementById('kurs').value = bynRate;
+                loadingElement.textContent = `(курс НБ РБ на ${formattedDate})`;
+
+                calculate();
+            } catch (error) {
+                console.error('Ошибка при получении курса:', error);
+                loadingElement.textContent = ' (используется курс по умолчанию 3)';
+                document.getElementById('kurs').value = '3';
+                calculate();
+            }
+
+            const loadingElement2 = document.getElementById('kurs-loading2');
+            try {
+                loadingElement2.textContent = '(загрузка курса...)';
+                
+                const response = await fetch('https://api.frankfurter.app/latest?from=EUR&to=USD');
+                
+                if (!response.ok) {
+                    throw new Error('Ошибка при получении курса');
+                }
+                
+                const data = await response.json();
+                const rate = data.rates;
+                euroRate = rate.USD.toFixed(4);
+                
+                document.getElementById('kurs2').value = euroRate;
+                loadingElement2.textContent = ` (курс FRNBK на ${formattedDate})`;
+                
+                calculate();
+            } catch (error) {
+                console.error('Ошибка при получении курса:', error);
+                loadingElement2.textContent = ' (используется курс по умолчанию 1)';
+                document.getElementById('kurs2').value = '1';
+                calculate();
+            }
+        }
+
+        function calculate() {
+            // БЛОК 1
+            const Q = parseFloat(document.getElementById('Q').value) || 0;
+            const W = parseFloat(document.getElementById('W').value) || 0;
+            const E = parseFloat(document.getElementById('E').value) || 0;
+            const R = parseFloat(document.getElementById('R').value) || 0;
+            const T = parseFloat(document.getElementById('T').value) || 0;
+            const Y = parseFloat(document.getElementById('Y').value) || 0;
+            const Y1 = parseFloat(document.getElementById('Y1').value) || 0;
+            const U = parseFloat(document.getElementById('U').value) || 0;
+            const kurs = parseFloat(document.getElementById('kurs').value) || 1;
+            const kurs2 = parseFloat(document.getElementById('kurs2').value) || 1;
+            
+            // Расчет P
+            const baseP = Q + W + E + R + T + Y1;
+            const P = baseP + (baseP * Y / 100) + U / bynRate;
+            document.getElementById('P').textContent = P.toFixed(2);
+            
+            // БЛОК 2
+            const A = parseFloat(document.getElementById('A').value) || 0;
+            const S = parseFloat(document.getElementById('S').value) || 0;
+            const D = parseFloat(document.getElementById('D').value) || 0;
+            const F = parseFloat(document.getElementById('F').value) || 0;
+            const G = parseFloat(document.getElementById('G').value) || 0;
+            
+            // Расчет O
+            const O = (A * kurs2) + (S / kurs) + (D / kurs) + (F / kurs) + (G / kurs);
+            document.getElementById('O').textContent = O.toFixed(2);
+            
+            // БЛОК 3
+            const J = P + O;
+            document.getElementById('J').textContent = J.toFixed(2);
+            document.getElementById('J_byn').textContent = (J * kurs).toFixed(2);
+        }
+
+        function copyResults() {
+            const Q = parseFloat(document.getElementById('Q').value) || 0;
+            const W = parseFloat(document.getElementById('W').value) || 0;
+            const E = parseFloat(document.getElementById('E').value) || 0;
+            const R = parseFloat(document.getElementById('R').value) || 0;
+            const T = parseFloat(document.getElementById('T').value) || 0;
+            const Y = parseFloat(document.getElementById('Y').value) || 0;
+            const Y1 = parseFloat(document.getElementById('Y1').value) || 0;
+            const U = parseFloat(document.getElementById('U').value) || 0;
+            const A = parseFloat(document.getElementById('A').value) || 0;
+            const S = parseFloat(document.getElementById('S').value) || 0;
+            const D = parseFloat(document.getElementById('D').value) || 0;
+            const F = parseFloat(document.getElementById('F').value) || 0;
+            const G = parseFloat(document.getElementById('G').value) || 0;
+            const kurs = parseFloat(document.getElementById('kurs').value) || 1;
+            const kurs2 = parseFloat(document.getElementById('kurs2').value) || 1;
+            
+            const baseP = Q + W + E + R + T + Y1;
+            const P = baseP + (baseP * Y / 100) + U / bynRate;
+            const O = (A * kurs2) + (S / kurs) + (D / kurs) + (F / kurs) + (G / kurs);
+            const J = P + O;
+            const L1 = (baseP * Y / 100) + Y1;
+
+            const resultText = `Ставка на аукционе: ${Q.toFixed(2)}$
+Аукционный сбор: ${W.toFixed(2)}$
+Доставка в порт погрузки: ${E.toFixed(2)}$
+Доставка морем: ${R.toFixed(2)}$ (${selectedPortDescription})
+Доставка в Беларусь: ${T.toFixed(2)}$ (включает портовые расходы, оформление и доставку авто в Беларусь)
+Комиссия за перевод: ${L1.toFixed(2)}$ (${Y}% + ${Y1.toFixed(2)}$ - комиссия за перевод средств в США)
+Моя услуга: ${U.toFixed(2)} BYN
+Итого расходы по Америке: ${P.toFixed(2)}$
+
+Таможенная пошлина: ${A.toFixed(2)}€
+Утилизационный сбор: ${S.toFixed(2)} BYN
+Таможенный сбор: ${D.toFixed(2)} BYN
+Расходы на СВХ: ${F.toFixed(2)} BYN (включает в себя оплату декларанту, стоянку, разгрузку авто и складирование)
+ЭПТС: ${G.toFixed(2)}  BYN
+Итого таможенные расходы: ${O.toFixed(2)}$
+
+Общая сумма: ${J.toFixed(2)}$ (${(J * kurs).toFixed(2)} BYN)
+
+Данный расчет произведен под 140 указ президента Республики Беларусь.
+Расчеты проводились на момент ${formattedDate}, актуальный курс USD к BYN - ${kurs}, EUR к USD - ${kurs2}`;
+
+            navigator.clipboard.writeText(resultText).then(() => {
+                const btn = document.querySelector('button');
+                btn.textContent = 'Скопировано!';
+                btn.style.backgroundColor = '#2ecc71';
+                setTimeout(() => {
+                    btn.textContent = 'Копировать результаты';
+                    btn.style.backgroundColor = '#3498db';
+                }, 2000);
+            }).catch(err => {
+                console.error('Ошибка при копировании: ', err);
+                const textarea = document.createElement('textarea');
+                textarea.value = resultText;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                
+                const btn = document.querySelector('button');
+                btn.textContent = 'Скопировано!';
+                btn.style.backgroundColor = '#2ecc71';
+                setTimeout(() => {
+                    btn.textContent = 'Копировать результаты';
+                    btn.style.backgroundColor = '#3498db';
+                }, 2000);
+            });
+        }
+
+        window.onload = function() {
+            fetchExchangeRate();
+            populatePortSelect();
+            calculate();
+        };
+    </script>
 </body>
 </html>
