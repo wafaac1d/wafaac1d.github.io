@@ -370,8 +370,9 @@
                 <label for="port-select">Порт назначения</label>
                 <div class="input-wrapper">
                     <select id="port-select" onchange="updatePortDescription()">
-                        <option value="">Выберите порт...</option>
+                        <option value="">Загрузка портов...</option>
                     </select>
+                    <span id="port-loading" class="loading">Загрузка...</span>
                 </div>
             </div>
             
@@ -491,11 +492,7 @@
     </main>
 
     <script>
-        let ports = [
-            { title: 'Поти, Грузия', description: 'доставка в порт Поти, Грузия' },
-            { title: 'Клайпеда, Литва', description: 'доставка в порт Клайпеда, Литва' }
-        ];
-
+        let ports = [];
         let bynRate = 3;
         let euroRate = 1;
 
@@ -506,25 +503,89 @@
             year: 'numeric'
         });
 
-        let selectedPortDescription = 'доставка в порт Поти, Грузия';
+        let selectedPortDescription = '';
 
-        // Заполнение выпадающего списка
+        // Загрузка портов из файла
+        async function loadPortsFromFile() {
+            const portLoadingElement = document.getElementById('port-loading');
+            const portSelect = document.getElementById('port-select');
+            
+            try {
+                portLoadingElement.textContent = 'Загрузка...';
+                portSelect.innerHTML = '<option value="">Загрузка портов...</option>';
+                
+                const response = await fetch('https://raw.githubusercontent.com/wafaac1d/wafaac1d.github.io/refs/heads/main/ports.txt');
+                
+                if (!response.ok) {
+                    throw new Error('Ошибка при загрузке портов');
+                }
+                
+                const text = await response.text();
+                const lines = text.split('\n');
+                
+                // Очищаем массив портов
+                ports = [];
+                
+                // Пропускаем первую строку (заголовок) и обрабатываем остальные
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (line && line.includes(';')) {
+                        const [title, description] = line.split(';');
+                        if (title && description) {
+                            ports.push({
+                                title: title.trim(),
+                                description: description.trim()
+                            });
+                        }
+                    }
+                }
+                
+                // Если порты загружены успешно, обновляем список
+                if (ports.length > 0) {
+                    populatePortSelect();
+                    portLoadingElement.textContent = '';
+                } else {
+                    throw new Error('Не удалось загрузить список портов');
+                }
+                
+            } catch (error) {
+                console.error('Ошибка при загрузке портов:', error);
+                
+                // Используем порты по умолчанию в случае ошибки
+                ports = [
+                    { title: 'Поти, Грузия', description: 'доставка в порт Поти, Грузия' },
+                    { title: 'Клайпеда, Литва', description: 'доставка в порт Клайпеда, Литва' }
+                ];
+                
+                populatePortSelect();
+                portLoadingElement.textContent = ' (используются порты по умолчанию)';
+            }
+        }
+
+        // Заполнение выпадающего списка портами
         function populatePortSelect() {
             const select = document.getElementById('port-select');
             select.innerHTML = '<option value="">Выберите порт...</option>';
             
-            ports.forEach(port => {
+            ports.forEach((port, index) => {
                 const option = document.createElement('option');
                 option.value = port.description;
                 option.textContent = port.title;
+                option.setAttribute('data-index', index);
                 select.appendChild(option);
             });
+            
+            // Выбираем первый порт по умолчанию, если есть порты
+            if (ports.length > 0) {
+                select.value = ports[0].description;
+                selectedPortDescription = ports[0].description;
+            }
         }
 
         // Обновление описания порта
         function updatePortDescription() {
             const select = document.getElementById('port-select');
-            selectedPortDescription = select.value || 'доставка в порт Поти, Грузия';
+            selectedPortDescription = select.value || '';
         }
 
         async function fetchExchangeRate() {
@@ -640,7 +701,7 @@
             const resultText = `Ставка на аукционе: ${Q.toFixed(2)}$
 Аукционный сбор: ${W.toFixed(2)}$
 Доставка в порт погрузки: ${E.toFixed(2)}$
-Доставка морем: ${R.toFixed(2)}$ (${selectedPortDescription})
+Доставка морем: ${R.toFixed(2)}$ (${selectedPortDescription || 'порт не выбран'})
 Доставка в Беларусь: ${T.toFixed(2)}$ (включает портовые расходы, оформление и доставку авто в Беларусь)
 Комиссия за перевод: ${L1.toFixed(2)}$ (${Y}% + ${Y1.toFixed(2)}$ - комиссия за перевод средств в США)
 Моя услуга: ${U.toFixed(2)} BYN
@@ -687,7 +748,7 @@
 
         window.onload = function() {
             fetchExchangeRate();
-            populatePortSelect();
+            loadPortsFromFile();
             calculate();
         };
     </script>
