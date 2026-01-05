@@ -698,11 +698,11 @@
             const J = P + O;
             const L1 = (baseP * Y / 100) + Y1;
 
+            const totalNew = R + T + E;
+
             const resultText = `Ставка на аукционе: ${Q.toFixed(2)}$
 Аукционный сбор: ${W.toFixed(2)}$
-Доставка в порт погрузки: ${E.toFixed(2)}$
-Доставка морем: ${R.toFixed(2)}$ (${selectedPortDescription || 'порт не выбран'})
-Доставка в Беларусь: ${T.toFixed(2)}$ (включает портовые расходы, оформление и доставку авто в Беларусь)
+Доставка в Беларусь: ${totalNew.toFixed(2)}$ (${selectedPortDescription || 'порт не выбран'})
 Комиссия за перевод: ${L1.toFixed(2)}$ (${Y}% + ${Y1.toFixed(2)}$ - комиссия за перевод средств в США)
 Моя услуга: ${U.toFixed(2)} BYN
 Итого расходы по Америке: ${P.toFixed(2)}$
